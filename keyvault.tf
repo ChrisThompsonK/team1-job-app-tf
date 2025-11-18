@@ -6,6 +6,7 @@ resource "azurerm_key_vault" "main" {
   resource_group_name = azurerm_resource_group.team1-job-app-key-rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
+  enable_rbac_authorization  = true
 
   tags = var.tags
 }
