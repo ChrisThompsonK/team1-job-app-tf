@@ -25,18 +25,8 @@ provider "azurerm" {
   }
 }
 
-resource "azurerm_resource_group" "team1-job-app-key-rg" {
-  name     = "team1-job-app-key-rg"
-  location = "UK South"
-}
-
-resource "azurerm_resource_group" "team1-job-app-env-rg" {
-  name     = "team1-job-app-env-rg"
-  location = "UK South"
-}
-
-resource "azurerm_container_app_environment" "team1-job-app-container-app-environment" {
-  name                = "team1-job-app-container-app-environment"
-  location            = azurerm_resource_group.team1-job-app-env-rg.location
-  resource_group_name = azurerm_resource_group.team1-job-app-env-rg.name
+resource "azurerm_resource_group" "main" {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
 }
