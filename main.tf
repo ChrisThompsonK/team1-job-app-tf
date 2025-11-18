@@ -25,7 +25,7 @@ provider "azurerm" {
   }
 }
 
-resource "azurerm_resource_group" "example" {
+resource "azurerm_resource_group" "team1-job-app-key-rg" {
   name     = "example-resources"
   location = "UK South"
 }
