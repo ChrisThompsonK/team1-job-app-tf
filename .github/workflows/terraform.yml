@@ -41,11 +41,11 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -var-file="dev.tfvars"
+      run: terraform plan -var-file="dev.tfvars" -out dev-plan
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -var-file="dev.tfvars" -auto-approve
+      run: terraform apply -auto-approve dev-plan
 
   terraform-prod:
     runs-on: ubuntu-latest
@@ -76,8 +76,8 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan -var-file="prod.tfvars"
+      run: terraform plan -var-file="prod.tfvars" -out prod-plan
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -var-file="prod.tfvars" -auto-approve
+      run: terraform apply -auto-approve prod-plan
