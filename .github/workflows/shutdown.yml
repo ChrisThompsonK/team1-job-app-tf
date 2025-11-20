@@ -1,0 +1,20 @@
+name: 'Shutdown containers'
+on:
+    schedule:
+        - cron: 0 1 * * *
+
+jobs:
+    shutdown:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+        - name: stop container apps
+          run: |
+                az containerapp list --resource-group team1-job-app-shared-rg --environment team1-job-app-shared-env --query "[].name" -o tsv | while read app; do
+                  az containerapp stop --name "$app" --resource-group team1-job-app-shared-rg
+                done
+
+        
