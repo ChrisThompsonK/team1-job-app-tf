@@ -5,79 +5,35 @@ on:
     branches: [main]
       
   pull_request:
-    branches: [main,develop]
+    branches: [main, develop]
 
 jobs:
-  terraform-dev:
+  check-dev:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Azure Login
-      uses: azure/login@v1
+      
+    - name: Check Terraform - Dev
+      uses: ./.github/actions/terraform-deploy
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        environment: dev
+        tfvars-file: dev.tfvars
+        backend-key: team1.sr.dev.tfstate
+        working-directory: .
+        azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform Format Check
-      run: terraform fmt -check -recursive
-
-    - name: Set Azure credentials as environment variables
-      run: |
-        echo "Setting ARM_* env vars for Terraform..."
-        echo "ARM_CLIENT_ID=$(jq -r .clientId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_SUBSCRIPTION_ID=$(jq -r .subscriptionId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_TENANT_ID=$(jq -r .tenantId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-
-
-    - name: Terraform Init
-      run: terraform init -backend-config="key=team1.sr.dev.tfstate"
-
-    - name: Terraform Validate
-      run: terraform validate
-
-    - name: Terraform Plan
-      run: terraform plan -var-file="dev.tfvars" -out dev-plan
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve dev-plan
-
-  terraform-prod:
+  check-prod:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Azure Login
-      uses: azure/login@v1
+      
+    - name: Check Terraform - Prod
+      uses: ./.github/actions/terraform-deploy
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Set Azure credentials as environment variables
-      run: |
-        echo "Setting ARM_* env vars for Terraform..."
-        echo "ARM_CLIENT_ID=$(jq -r .clientId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_SUBSCRIPTION_ID=$(jq -r .subscriptionId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-        echo "ARM_TENANT_ID=$(jq -r .tenantId <<< '${{ secrets.AZURE_CREDENTIALS }}')" >> $GITHUB_ENV
-
-    - name: Terraform Init
-      run: terraform init -backend-config="key=team1.sr.prod.tfstate"
-
-    - name: Terraform Validate
-      run: terraform validate
-
-    - name: Terraform Plan
-      run: terraform plan -var-file="prod.tfvars" -out prod-plan
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve prod-plan
+        environment: prod
+        tfvars-file: prod.tfvars
+        backend-key: team1.sr.prod.tfstate
+        working-directory: .
+        azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
