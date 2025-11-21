@@ -2,9 +2,6 @@ name: 'Start containers'
 on:
     schedule:
         - cron: 0 7 * * *
-
-  schedule:
-    - cron: 0 7 * * *
 jobs:
     load-environments:
       runs-on: ubuntu-latest
