@@ -1,0 +1,88 @@
+name: 'Container App Terraform Deploy'
+description: 'Reusable composite action for deploying container apps with Terraform'
+
+inputs:
+  environment:
+    description: 'Deployment environment (e.g., dev, prod)'
+    required: true
+  tfvars-file:
+    description: 'Path to the tfvars file (e.g., dev.tfvars)'
+    required: true
+  backend-key:
+    description: 'Backend state file key (e.g., team1.sr.dev.tfstate)'
+    required: true
+  working-directory:
+    description: 'Working directory for Terraform commands'
+    required: false
+    default: '.'
+  azure-credentials:
+    description: 'Azure credentials JSON for authentication'
+    required: true
+
+outputs:
+  plan-file:
+    description: 'Path to the generated Terraform plan file'
+    value: ${{ steps.plan-output.outputs.plan-file }}
+  apply-status:
+    description: 'Status of the apply operation (success/skipped)'
+    value: ${{ steps.apply-output.outputs.apply-status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ inputs.azure-credentials }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Format Check
+      shell: bash
+      run: terraform fmt -check -recursive
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Set Azure credentials as environment variables
+      shell: bash
+      run: |
+        echo "Setting ARM_* env vars for Terraform..."
+        echo "ARM_CLIENT_ID=$(jq -r .clientId <<< '${{ inputs.azure-credentials }}')" >> $GITHUB_ENV
+        echo "ARM_CLIENT_SECRET=$(jq -r .clientSecret <<< '${{ inputs.azure-credentials }}')" >> $GITHUB_ENV
+        echo "ARM_SUBSCRIPTION_ID=$(jq -r .subscriptionId <<< '${{ inputs.azure-credentials }}')" >> $GITHUB_ENV
+        echo "ARM_TENANT_ID=$(jq -r .tenantId <<< '${{ inputs.azure-credentials }}')" >> $GITHUB_ENV
+
+    - name: Terraform Init
+      shell: bash
+      run: terraform init -backend-config="key=${{ inputs.backend-key }}"
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Terraform Validate
+      shell: bash
+      run: terraform validate
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Terraform Plan
+      shell: bash
+      run: terraform plan -var-file="${{ inputs.tfvars-file }}" -out ${{ inputs.environment }}-plan
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Set Plan Output
+      id: plan-output
+      shell: bash
+      run: echo "plan-file=${{ inputs.working-directory }}/${{ inputs.environment }}-plan" >> $GITHUB_OUTPUT
+
+    - name: Terraform Apply
+      id: apply-output
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
+          terraform apply -auto-approve ${{ inputs.environment }}-plan
+          echo "apply-status=success" >> $GITHUB_OUTPUT
+        else
+          echo "apply-status=skipped" >> $GITHUB_OUTPUT
+        fi
+      working-directory: ${{ inputs.working-directory }}
