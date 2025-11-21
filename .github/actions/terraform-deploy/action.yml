@@ -18,6 +18,10 @@ inputs:
   azure-credentials:
     description: 'Azure credentials JSON for authentication'
     required: true
+  plan-only:
+    description: 'If true, skip terraform apply and only run plan'
+    required: false
+    default: 'false'
 
 outputs:
   plan-file:
@@ -79,7 +83,9 @@ runs:
       id: apply-output
       shell: bash
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
+        if [[ "${{ inputs.plan-only }}" == "true" ]]; then
+          echo "apply-status=skipped" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push" ]]; then
           terraform apply -auto-approve ${{ inputs.environment }}-plan
           echo "apply-status=success" >> $GITHUB_OUTPUT
         else
