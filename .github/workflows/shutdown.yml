@@ -1,0 +1,36 @@
+name: 'Shutdown containers'
+on:
+    schedule:
+        - cron: 0 1 * * *
+
+jobs:
+    load-environments:
+      runs-on: ubuntu-latest
+      outputs:
+        matrix: ${{ steps.set-matrix.outputs.matrix }}
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+        
+        - name: Set matrix from config
+          id: set-matrix
+          run: |
+            echo "matrix=$(cat .github/workflows/environments.json | jq -c '.environments')" >> $GITHUB_OUTPUT
+    
+    shutdown:
+      needs: load-environments
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          environment: ${{ fromJson(needs.load-environments.outputs.matrix) }}
+      steps:
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+        - name: Stop container apps in ${{ matrix.environment.name }}
+          run: |
+                az containerapp stop --name ${{matrix.environment.container_app}} --resource-group ${{ matrix.environment.resource_group }}
+
+        

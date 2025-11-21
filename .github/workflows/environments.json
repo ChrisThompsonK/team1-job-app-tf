@@ -1,0 +1,15 @@
+{
+  "environments": [
+    {
+      "name": "frontend",
+      "resource_group": "team1-job-app-frontend-rg",
+      "container_app": "team1-job-app-frontend"
+      
+    },
+    {
+      "name":"backend-dev",
+      "resource_group":"team1-job-app-backend-rg",
+      "container_app":"team1-job-app-backend-app"
+    }
+  ]
+}
