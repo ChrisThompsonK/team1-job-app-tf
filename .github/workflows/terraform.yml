@@ -8,13 +8,13 @@ on:
     branches: [main, develop]
 
 jobs:
-  validate-dev:
+  check-dev:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Validate Terraform - Dev
+    - name: Check Terraform - Dev
       uses: ./.github/actions/terraform-deploy
       with:
         environment: dev
@@ -23,13 +23,13 @@ jobs:
         working-directory: .
         azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
 
-  validate-prod:
+  check-prod:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       
-    - name: Validate Terraform - Prod
+    - name: Check Terraform - Prod
       uses: ./.github/actions/terraform-deploy
       with:
         environment: prod
