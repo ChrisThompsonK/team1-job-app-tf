@@ -11,6 +11,9 @@ jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
     - name: Deploy to Dev
       uses: ./.github/actions/terraform-deploy
       with:
@@ -23,6 +26,9 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
     - name: Deploy to Prod
       uses: ./.github/actions/terraform-deploy
       with:
